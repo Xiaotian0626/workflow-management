@@ -1,0 +1,73 @@
+name: Daily Work Management Demo
+
+on:
+  # Trigger workflow on push and also allow manual trigger
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      task_name:
+        description: 'Name of the task'
+        required: true
+        default: 'New Task'
+      task_priority:
+        description: 'Task Priority'
+        required: true
+        default: 'medium'
+        type: choice
+        options:
+          - high
+          - medium
+          - low
+
+jobs:
+  task-management:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Create Task
+        run: |
+          echo "Creating new task: ${{ github.event.inputs.task_name }}"
+          echo "Priority: ${{ github.event.inputs.task_priority }}"
+          echo "Task ID: ${{ github.run_id }}"
+          echo "Created at: $(date)"
+          
+      - name: Update Task Status
+        run: |
+          echo "Task Status: In Progress"
+          echo "Last Updated: $(date)"
+          
+      - name: Task Details
+        run: |
+          echo "::group::Task Details"
+          echo "Task Name: ${{ github.event.inputs.task_name }}"
+          echo "Priority: ${{ github.event.inputs.task_priority }}"
+          echo "Created By: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "::endgroup::"
+
+  daily-report:
+    needs: task-management
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Daily Report
+        run: |
+          echo "::group::Daily Work Report"
+          echo "Report Generated at: $(date)"
+          echo "Total Tasks Created: 1"
+          echo "Latest Task: ${{ github.event.inputs.task_name }}"
+          echo "::endgroup::"
+          
+      - name: Archive Report
+        run: |
+          echo "Report archived for future reference"
+          echo "Date: $(date)" > work-report.txt
+          echo "Task: ${{ github.event.inputs.task_name }}" >> work-report.txt
+          
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: daily-work-report
+          path: work-report.txt
